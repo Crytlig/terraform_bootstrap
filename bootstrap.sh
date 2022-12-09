@@ -3,11 +3,11 @@
 set -e
 
 # Bootstrapping variables
-storage_account_name="tstbootsdstr"
-location="westeurope"
-resource_group_name="tst-bootstrap"
-container_name="terraform"
-key="terraform.core"
+storage_account_name=""
+location=""
+resource_group_name=""
+container_name=""
+key=""
 
 export TF_VAR_storage_account_name="$storage_account_name"
 export TF_VAR_location="$location"
