@@ -77,7 +77,13 @@ data \"terraform_remote_state\" \"core\" {
 }
 "
 
-echo "OUPUTTING VARIABLES TO: backend.tfvars."
+echo "OUPUTTING VARIABLES TO: backend.tfvars"
+echo "COPY THIS FILE AND USE WHEN DOING TERRAFORM INIT"
+echo "REMEMBER TO CHANGE THE FOLLOWING IN YOUR OWN CONFIG 
+backend \"azurerm\" {
+    container_name = \"YOURNEWSTATEFILENAME\"
+  }
+"
 
 if [ -f "./backend.tfvars" ]; then rm backend.tfvars; fi
 
