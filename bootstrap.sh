@@ -2,12 +2,47 @@
 
 set -e
 
-# Bootstrapping variables
-storage_account_name=""
-location=""
-resource_group_name=""
-container_name=""
-key=""
+usage="$(basename "$0") [-h] [-l location] [-g resource_group_name] [-s storage_account_name] [-c container_name] [-k key]
+Creates a Terraform bootstrap using Terraform
+where:
+    -h  show this help text
+    -l  desired location of resource group and storage account
+    -g  desired resource group name
+    -c  container name within storage account
+    -k  storage state file name. Defaults to 'bootstrap'
+"
+
+while getopts h:l:g:c:k:s: flag
+do
+    case "${flag}" in
+        h) echo "$usage"; exit;;
+        l) location=${OPTARG};;
+        g) resource_group_name=${OPTARG};;
+        s) storage_account_name=${OPTARG};;
+        c) container_name=${OPTARG};;
+        k) key=${OPTARG};;
+        :) printf "Missing argument for -%s\n" "$OPTARG" >&2; echo "$usage" >&2; exit 1;;
+        \?) printf "Illegal option: -%s\n" "$OPTARG" >&2; echo "$usage" >&2; exit 1;;
+    esac
+done
+
+# mandatory arguments
+if [ ! "$location" ] || [ ! "$resource_group_name" ] || [ ! "$container_name" ] || [ ! "$storage_account_name" ]; then
+  echo "All arguments must be provided (key defaults to 'bootstrap')"
+  echo
+  echo "$usage" >&2; exit 1
+fi
+
+key=${key-"bootstrap"}
+storage_account_name=$(echo "${storage_account_name}" | tr '[:upper:]' '[:lower:]')$RANDOM
+
+
+echo "Arguments provided:"
+echo "Location: $location";
+echo "Resource Group Name: $resource_group_name";
+echo "Storage Account Name: $storage_account_name";
+echo "Container Name: $container_name";
+echo "Key: $key";
 
 export TF_VAR_storage_account_name="$storage_account_name"
 export TF_VAR_location="$location"
@@ -18,11 +53,11 @@ export TF_VAR_key="$key"
 # Comment the backend so we can use a local state file
 sed -i 's/backend/## backend/g' provider.tf
 
-echo "######################"
+
 echo "######################"
 echo "# ACTIVATING STAGE 1 #"
 echo "######################"
-echo "######################"
+
 
 echo -e "\n"
 
@@ -41,8 +76,9 @@ sed -i 's/##//g' provider.tf
 # Get the access key for the storage account
 access_key=$(cat terraform.tfstate | jq -r .outputs.storage_account_access_key.value)
 
-echo -e "\n\n"
+echo "######################"
 echo "# ACTIVATING STAGE 2 #"
+echo "######################"
 
 # Second init with file
 terraform init \
@@ -95,6 +131,3 @@ if [ -f "./backend.tfvars" ]; then rm backend.tfvars; fi
 } >> backend.tfvars
 
 terraform fmt
-
-# Remove old files if needed
-# rm -rf .terraform* && rm terraform.*
